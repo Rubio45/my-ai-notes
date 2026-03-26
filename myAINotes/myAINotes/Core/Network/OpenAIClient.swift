@@ -4,7 +4,7 @@ final class OpenAIClient {
     static let shared = OpenAIClient()
     private init() {}
 
-    let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
+    private let apiKey   = "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"
     private let endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
 
     private let systemPrompt = """
