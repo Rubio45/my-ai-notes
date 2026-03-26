@@ -2,7 +2,8 @@ from pydantic import BaseModel
 
 
 class BaseNote(BaseModel):
-    pass
+    title: str
+    content: str
 
 
 class CreateNote(BaseNote):
@@ -10,10 +11,12 @@ class CreateNote(BaseNote):
 
 
 class UpdateNote(BaseModel):
-    pass
+    title: str | None = None
+    content: str | None = None
 
 
 class NoteInDb(BaseNote):
     id: str
-    created_at: str
-    updated_at: str
+    user_id: str
+    created_at: int
+    updated_at: int
