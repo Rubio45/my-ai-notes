@@ -1,61 +1,27 @@
-//
-//  ContentView.swift
-//  myAINotes
-//
-//  Created by Alex Diaz on 26/3/26.
-//
-
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Environment(AppViewModel.self) private var appViewModel
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+        Group {
+            if !appViewModel.isOnboarded {
+                OnboardingView()
+                    .transition(.opacity)
+            } else if !appViewModel.isLoggedIn {
+                AuthContainerView()
+                    .transition(.opacity)
+            } else {
+                NotesListView()
+                    .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.35), value: appViewModel.isOnboarded)
+        .animation(.easeInOut(duration: 0.35), value: appViewModel.isLoggedIn)
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .environment(AppViewModel())
 }
