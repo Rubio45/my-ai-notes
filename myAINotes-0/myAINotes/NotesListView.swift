@@ -10,15 +10,15 @@ import SwiftData
 
 @MainActor
 struct NotesListView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.appContainer) private var container
 
     @State private var searchText: String = ""
     @State private var notes: [Note] = []
     @State private var isPresentingNewNote: Bool = false
+    @State private var path: [UUID] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if notes.isEmpty {
                     emptyState
@@ -41,20 +41,33 @@ struct NotesListView: View {
             }
             .searchable(text: $searchText, prompt: "Buscar notas")
             .onChange(of: searchText) { _ in load() }
-            .onAppear { bootstrapIfNeeded(); load() }
+            .onAppear { load() }
             .sheet(isPresented: $isPresentingNewNote) {
                 NewNoteSheet { title, content in
                     do {
                         let note = try container.notesRepository.create(title: title, content: content)
-                        // Encolamos la sincronización
                         Task { await container.syncService.enqueueSync(note: note) }
                         load()
+                        // Navegamos directo al editor de la nueva nota
+                        path.append(note.id)
                     } catch {
-                        // En una app real, mostraríamos un alert
                         print("Error creando nota: \(error)")
                     }
                 }
                 .presentationDetents([.medium, .large])
+            }
+            .navigationDestination(for: UUID.self) { noteID in
+                // #region agent log
+                let _nc = notes.count; let _found = notes.first(where: { $0.id == noteID }) != nil
+                { var r = URLRequest(url: URL(string: "http://127.0.0.1:7291/ingest/b5960aac-798e-4289-9938-2fac66bcef41")!); r.httpMethod = "POST"; r.setValue("application/json", forHTTPHeaderField: "Content-Type"); r.setValue("3c0e57", forHTTPHeaderField: "X-Debug-Session-Id"); r.httpBody = "{\"sessionId\":\"3c0e57\",\"timestamp\":\(Int(Date().timeIntervalSince1970*1000)),\"location\":\"NotesListView:navDest\",\"message\":\"Nav destination resolved\",\"data\":{\"notesCount\":\(_nc),\"found\":\(_found)},\"hypothesisId\":\"A\"}".data(using: .utf8); URLSession.shared.dataTask(with: r).resume() }()
+                // #endregion
+                if let note = notes.first(where: { $0.id == noteID }) {
+                    NoteEditorView(note: note)
+                        .navigationBarTitleDisplayMode(.inline)
+                } else {
+                    Text("Nota no encontrada")
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -62,25 +75,28 @@ struct NotesListView: View {
     private var list: some View {
         List {
             ForEach(notes, id: \.id) { note in
-                HStack(alignment: .top, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(note.title.isEmpty ? "Sin título" : note.title)
-                            .font(.headline)
-                            .lineLimit(1)
-                        Text(note.content)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                        Text(note.updatedAt, style: .date)
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                Button {
+                    path.append(note.id)
+                } label: {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(note.title.isEmpty ? "Sin título" : note.title)
+                                .font(.headline)
+                                .lineLimit(1)
+                            Text(note.content)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                            Text(note.updatedAt, style: .date)
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                        Spacer()
+                        syncBadge(for: note.syncState)
                     }
-                    Spacer()
-                    syncBadge(for: note.syncState)
+                    .padding(.vertical, 6)
                 }
-                .padding(.vertical, 6)
-                .contentShape(Rectangle())
-                // Navegación a detalle/editor llegará en el siguiente paso
+                .buttonStyle(.plain)
             }
             .onDelete(perform: delete)
         }
@@ -149,23 +165,12 @@ struct NotesListView: View {
     private func load() {
         do {
             notes = try container.notesRepository.fetchAll(search: searchText)
+            // #region agent log
+            let _count = notes.count
+            { var r = URLRequest(url: URL(string: "http://127.0.0.1:7291/ingest/b5960aac-798e-4289-9938-2fac66bcef41")!); r.httpMethod = "POST"; r.setValue("application/json", forHTTPHeaderField: "Content-Type"); r.setValue("3c0e57", forHTTPHeaderField: "X-Debug-Session-Id"); r.httpBody = "{\"sessionId\":\"3c0e57\",\"timestamp\":\(Int(Date().timeIntervalSince1970*1000)),\"location\":\"NotesListView:load\",\"message\":\"Notes loaded\",\"data\":{\"count\":\(_count)},\"hypothesisId\":\"A\"}".data(using: .utf8); URLSession.shared.dataTask(with: r).resume() }()
+            // #endregion
         } catch {
             print("Error cargando notas: \(error)")
-        }
-    }
-
-    private func bootstrapIfNeeded() {
-        // Reconstruye el container live con el ModelContext real del entorno.
-        // Esto asegura que AppContainer.live use el mismo context del Scene.
-        if container.notesRepository is SwiftDataNotesRepository == false {
-            let repo = SwiftDataNotesRepository(context: modelContext)
-            let sync = MockSyncService(context: modelContext)
-            let ai = MockAIChatService()
-            let newContainer = AppContainer(notesRepository: repo, syncService: sync, aiService: ai)
-            // Inyectamos al Environment.
-            // Nota: No podemos mutar Environment directamente aquí, pero el .environment(container)
-            // se establece en myAINotesApp. Para simplificar el paso 1, asumimos que ya llega un container válido.
-            // Si quisieras, podemos ajustar myAINotesApp para construir el container con modelContext.
         }
     }
 }

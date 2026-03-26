@@ -128,6 +128,10 @@ struct NoteEditorView: View {
         do {
             try container.notesRepository.update(note: note, title: title, content: content)
             lastSaveDate = .now
+            // #region agent log
+            let _mt = Thread.isMainThread
+            { var r = URLRequest(url: URL(string: "http://127.0.0.1:7291/ingest/b5960aac-798e-4289-9938-2fac66bcef41")!); r.httpMethod = "POST"; r.setValue("application/json", forHTTPHeaderField: "Content-Type"); r.setValue("3c0e57", forHTTPHeaderField: "X-Debug-Session-Id"); r.httpBody = "{\"sessionId\":\"3c0e57\",\"timestamp\":\(Int(Date().timeIntervalSince1970*1000)),\"location\":\"NoteEditorView:saveNow\",\"message\":\"saveNow succeeded\",\"data\":{\"isMainThread\":\(_mt)},\"hypothesisId\":\"D\"}".data(using: .utf8); URLSession.shared.dataTask(with: r).resume() }()
+            // #endregion
             // Si estaba sincronizada, update() ya marca .pending; encolamos sync
             container.syncService.enqueueSync(note: note)
             return true

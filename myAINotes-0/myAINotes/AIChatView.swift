@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @MainActor
 struct AIChatView: View {
@@ -28,10 +31,10 @@ struct AIChatView: View {
                                 handleAction(action, for: msg)
                             })
                             .id(msg.id)
-                            .padding(.horizontal)
+                            .padding(Edge.Set.horizontal)
                         }
                     }
-                    .padding(.vertical, 12)
+                    .padding(Edge.Set.vertical, 12)
                 }
                 .onChange(of: messages.count) { _ in
                     withAnimation(.easeInOut) {
@@ -45,8 +48,8 @@ struct AIChatView: View {
             Divider()
 
             inputBar
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(Edge.Set.horizontal)
+                .padding(Edge.Set.vertical, 8)
                 .background(.bar)
         }
         .navigationTitle("Chat con IA")
@@ -100,7 +103,8 @@ struct AIChatView: View {
         }
     }
 
-    private enum QuickAction {
+    // Make this visible to other types in the same file
+    fileprivate enum QuickAction {
         case saveAsNote
         case addToExisting
         case copyText
@@ -121,7 +125,7 @@ struct AIChatView: View {
             // En la siguiente iteración: presentar un sheet para elegir nota existente y anexar texto.
             print("Añadir a existente (pendiente de UI de selección)")
         case .copyText:
-            UIPasteboard.general.string = message.text
+            copyToPasteboard(message.text)
         case .summarizeMore:
             Task { @MainActor in
                 do {
@@ -138,11 +142,24 @@ struct AIChatView: View {
         let firstLine = text.split(separator: "\n").first.map(String.init) ?? text
         return String(firstLine.prefix(60))
     }
+
+    private func copyToPasteboard(_ text: String) {
+        #if canImport(UIKit)
+        UIPasteboard.general.string = text
+        #elseif canImport(AppKit)
+        // macOS fallback
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(text, forType: .string)
+        #else
+        // Unsupported platform: no-op
+        #endif
+    }
 }
 
 private struct MessageBubble: View {
     let message: AIMessage
-    var onAction: (AIChatView.QuickAction) -> Void
+    var onAction: (QuickAction) -> Void
 
     var isUser: Bool { message.role == .user }
 
@@ -157,7 +174,7 @@ private struct MessageBubble: View {
                     .padding(12)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(isUser ? Color.accentColor.gradient : Color(.secondarySystemBackground))
+                            .fill(isUser ? Color.accentColor : bubbleBackgroundColor)
                     )
                 if !isUser {
                     actionRow
@@ -167,6 +184,15 @@ private struct MessageBubble: View {
             if !isUser { Spacer(minLength: 40) }
         }
         .transition(.move(edge: isUser ? .trailing : .leading).combined(with: .opacity))
+    }
+
+    // Cross-platform safe background color for assistant bubble
+    private var bubbleBackgroundColor: Color {
+        #if canImport(UIKit)
+        return Color(uiColor: .secondarySystemBackground)
+        #else
+        return Color.secondary.opacity(0.15)
+        #endif
     }
 
     private var actionRow: some View {

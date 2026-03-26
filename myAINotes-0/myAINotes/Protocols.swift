@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SwiftData
 
 protocol NotesRepository {
     func fetchAll(search: String?) throws -> [Note]

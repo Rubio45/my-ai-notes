@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from dependencies.auth_dependency import get_current_user_id, oauth2_scheme
 from repos.v1.users import CreateUser, UserInDb, LoginRequest, TokenResponse
 
 from .auth_controller import auth_controller
@@ -15,3 +16,8 @@ async def register(body: CreateUser) -> UserInDb:
 @auth_router.post("/login")
 async def login(body: LoginRequest) -> TokenResponse:
     return await auth_controller.login(body)
+
+
+@auth_router.post("/logout", status_code=204, dependencies=[Depends(get_current_user_id)])
+async def logout(token: str = Depends(oauth2_scheme)) -> None:
+    await auth_controller.logout(token)
