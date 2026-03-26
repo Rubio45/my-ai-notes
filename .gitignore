@@ -1,0 +1,169 @@
+# ============================================================
+# SISTEMA OPERATIVO
+# ============================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.AppleDouble
+.LSOverride
+Icon
+
+# ============================================================
+# VARIABLES DE ENTORNO Y SECRETOS
+# ============================================================
+
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.staging
+*.env
+secrets.json
+secrets.yaml
+secrets.yml
+
+# ============================================================
+# PYTHON (my-ai-notes-backend)
+# ============================================================
+
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+.Python
+
+# Distribución / empaquetado
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+
+# Pytest / cobertura
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+nosetests.xml
+junit.xml
+
+# MyPy / Pyright
+.mypy_cache/
+.dmypy.json
+.pyright/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Instalador de pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Flask / FastAPI / uvicorn
+instance/
+*.log
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SQLite
+*.sqlite3
+*.db
+
+# ============================================================
+# iOS / XCODE (myAINotes)
+# ============================================================
+
+# Build
+build/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode user data
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods
+Pods/
+*.xcworkspace
+!*.xcodeproj/*.xcworkspace
+!default.xcworkspace
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# Archivos de provisioning y certificados
+*.mobileprovision
+*.p12
+*.cer
+
+# ============================================================
+# EDITORES E IDEs
+# ============================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains
+.idea/
+*.iml
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+\#*\#
+
+# ============================================================
+# MISCELÁNEOS
+# ============================================================
+
+*.bak
+*.tmp
+*.temp
+*.orig
