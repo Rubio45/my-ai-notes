@@ -1,2 +1,5 @@
+from services.mongo_service import mongo_service
+
+
 async def init_services() -> None:
-    pass
+    await mongo_service.connect()
